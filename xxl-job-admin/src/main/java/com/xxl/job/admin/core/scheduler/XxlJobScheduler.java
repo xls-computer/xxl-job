@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author xuxueli 2018-10-28 00:18:17
  */
-
+//核心启动逻辑
 public class XxlJobScheduler  {
     private static final Logger logger = LoggerFactory.getLogger(XxlJobScheduler.class);
 
@@ -25,6 +25,7 @@ public class XxlJobScheduler  {
         initI18n();
 
         // admin trigger pool start
+        // 启动两个线程池
         JobTriggerPoolHelper.toStart();
 
         // admin registry monitor run

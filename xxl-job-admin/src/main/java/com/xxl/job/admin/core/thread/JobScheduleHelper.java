@@ -38,6 +38,7 @@ public class JobScheduleHelper {
     public void start(){
 
         // schedule thread
+        // 时间管理和发送任务命令
         scheduleThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -68,40 +69,49 @@ public class JobScheduleHelper {
 
                         conn = XxlJobAdminConfig.getAdminConfig().getDataSource().getConnection();
                         connAutoCommit = conn.getAutoCommit();
+                        //关闭自动自交，启动事务
                         conn.setAutoCommit(false);
 
+                        //加锁（把数据库的记录作为分布式锁，多个调度中心调用的时候，只有一个能访问成功，如果走的是主键/索引，加的是记录锁，否则是表锁）
                         preparedStatement = conn.prepareStatement(  "select * from xxl_job_lock where lock_name = 'schedule_lock' for update" );
                         preparedStatement.execute();
 
-                        // tx start
+                        // tx start 开启事务
 
                         // 1、pre read
                         long nowTime = System.currentTimeMillis();
+                        //获取 trigger_next_time <= now + 5s的所有任务【接下来5s时刻之前要执行的所有任务】
                         List<XxlJobInfo> scheduleList = XxlJobAdminConfig.getAdminConfig().getXxlJobInfoDao().scheduleJobQuery(nowTime + PRE_READ_MS, preReadCount);
                         if (scheduleList!=null && scheduleList.size()>0) {
                             // 2、push time-ring
                             for (XxlJobInfo jobInfo: scheduleList) {
 
                                 // time-ring jump
+                                // 5s前就应该执行的任务
                                 if (nowTime > jobInfo.getTriggerNextTime() + PRE_READ_MS) {
                                     // 2.1、trigger-expire > 5s：pass && make next-trigger-time
                                     logger.warn(">>>>>>>>>>> xxl-job, schedule misfire, jobId = " + jobInfo.getId());
 
                                     // 1、misfire match
+                                    // 根据策略判断是否执行
                                     MisfireStrategyEnum misfireStrategyEnum = MisfireStrategyEnum.match(jobInfo.getMisfireStrategy(), MisfireStrategyEnum.DO_NOTHING);
                                     if (MisfireStrategyEnum.FIRE_ONCE_NOW == misfireStrategyEnum) {
                                         // FIRE_ONCE_NOW 》 trigger
+                                        // 立即执行当前任务
                                         JobTriggerPoolHelper.trigger(jobInfo.getId(), TriggerTypeEnum.MISFIRE, -1, null, null, null);
                                         logger.debug(">>>>>>>>>>> xxl-job, schedule push trigger : jobId = " + jobInfo.getId() );
                                     }
 
                                     // 2、fresh next
+                                    //更新trigger_next_time
                                     refreshNextValidTime(jobInfo, new Date());
 
+                                    //0-5s前就应该执行的任务
                                 } else if (nowTime > jobInfo.getTriggerNextTime()) {
                                     // 2.2、trigger-expire < 5s：direct-trigger && make next-trigger-time
 
                                     // 1、trigger
+                                    // 立即执行
                                     JobTriggerPoolHelper.trigger(jobInfo.getId(), TriggerTypeEnum.CRON, -1, null, null, null);
                                     logger.debug(">>>>>>>>>>> xxl-job, schedule push trigger : jobId = " + jobInfo.getId() );
 
@@ -122,6 +132,7 @@ public class JobScheduleHelper {
 
                                     }
 
+                                    //接下来5s内要执行的任务
                                 } else {
                                     // 2.3、trigger-pre-read：time-ring trigger && make next-trigger-time
 

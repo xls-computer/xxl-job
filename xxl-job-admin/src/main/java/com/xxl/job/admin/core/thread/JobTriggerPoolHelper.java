@@ -79,11 +79,13 @@ public class JobTriggerPoolHelper {
         // choose thread pool
         ThreadPoolExecutor triggerPool_ = fastTriggerPool;
         AtomicInteger jobTimeoutCount = jobTimeoutCountMap.get(jobId);
+        // 默认使用快的线程池【线程更多，等待队列更小】，如果超时情况多则使用慢的线程池
         if (jobTimeoutCount!=null && jobTimeoutCount.get() > 10) {      // job-timeout 10 times in 1 min
             triggerPool_ = slowTriggerPool;
         }
 
         // trigger
+        // 异步线程池发起任务命令
         triggerPool_.execute(new Runnable() {
             @Override
             public void run() {

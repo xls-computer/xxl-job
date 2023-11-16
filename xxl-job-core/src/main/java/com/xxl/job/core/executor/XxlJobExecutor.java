@@ -71,16 +71,20 @@ public class XxlJobExecutor  {
         XxlJobFileAppender.initLogPath(logPath);
 
         // init invoker, admin-client
+        // 设置调度中心服务器列表（多个的话，中间以","间隔）
         initAdminBizList(adminAddresses, accessToken);
 
 
         // init JobLogFileCleanThread
+        // 日志清理线程（每天扫描一遍日志目录进行清理）
         JobLogFileCleanThread.getInstance().start(logRetentionDays);
 
         // init TriggerCallbackThread
+        // 回调线程，监控callBackQueue，访问调度中心
         TriggerCallbackThread.getInstance().start();
 
         // init executor-server
+        // 开启嵌入式服务器
         initEmbedServer(address, ip, port, appname, accessToken);
     }
 

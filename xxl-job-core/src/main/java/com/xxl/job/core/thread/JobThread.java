@@ -111,6 +111,7 @@ public class JobThread extends Thread{
             TriggerParam triggerParam = null;
             try {
 				// to check toStop signal, we need cycle, so wo cannot use queue.take(), instand of poll(timeout)
+				// 没有数据则会被阻塞
 				triggerParam = triggerQueue.poll(3L, TimeUnit.SECONDS);
 				if (triggerParam!=null) {
 					running = true;
@@ -143,6 +144,7 @@ public class JobThread extends Thread{
 									// init job context
 									XxlJobContext.setXxlJobContext(xxlJobContext);
 
+									//执行该任务【反射：调用对应的类的方法】
 									handler.execute();
 									return true;
 								}
@@ -176,6 +178,7 @@ public class JobThread extends Thread{
 								:tempHandleMsg;
 						XxlJobContext.getXxlJobContext().setHandleMsg(tempHandleMsg);
 					}
+					//记录日志
 					XxlJobHelper.log("<br>----------- xxl-job job execute end(finish) -----------<br>----------- Result: handleCode="
 							+ XxlJobContext.getXxlJobContext().getHandleCode()
 							+ ", handleMsg = "
@@ -207,6 +210,7 @@ public class JobThread extends Thread{
                     // callback handler info
                     if (!toStop) {
                         // commonm
+						// 执行任务结束，将执行的情况加入到callBackQueue中，TriggerCallbackThread线程会异步的执行回调
                         TriggerCallbackThread.pushCallBack(new HandleCallbackParam(
                         		triggerParam.getLogId(),
 								triggerParam.getLogDateTime(),

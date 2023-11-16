@@ -79,6 +79,7 @@ public class XxlJobTrigger {
         if (ExecutorRouteStrategyEnum.SHARDING_BROADCAST==ExecutorRouteStrategyEnum.match(jobInfo.getExecutorRouteStrategy(), null)
                 && group.getRegistryList()!=null && !group.getRegistryList().isEmpty()
                 && shardingParam==null) {
+            //广播策略，则要发送任务命令到所有到集群中的所有节点
             for (int i = 0; i < group.getRegistryList().size(); i++) {
                 processTrigger(group, jobInfo, finalFailRetryCount, triggerType, i, group.getRegistryList().size());
             }
@@ -116,6 +117,7 @@ public class XxlJobTrigger {
         String shardingParam = (ExecutorRouteStrategyEnum.SHARDING_BROADCAST==executorRouteStrategyEnum)?String.valueOf(index).concat("/").concat(String.valueOf(total)):null;
 
         // 1、save log-id
+        // 生成一条日志
         XxlJobLog jobLog = new XxlJobLog();
         jobLog.setJobGroup(jobInfo.getJobGroup());
         jobLog.setJobId(jobInfo.getId());
@@ -124,6 +126,7 @@ public class XxlJobTrigger {
         logger.debug(">>>>>>>>>>> xxl-job trigger start, jobId:{}", jobLog.getId());
 
         // 2、init trigger-param
+        // 初始化任务命令
         TriggerParam triggerParam = new TriggerParam();
         triggerParam.setJobId(jobInfo.getId());
         triggerParam.setExecutorHandler(jobInfo.getExecutorHandler());
@@ -139,6 +142,7 @@ public class XxlJobTrigger {
         triggerParam.setBroadcastTotal(total);
 
         // 3、init address
+        // 根据路由策略，选择本次发送地址
         String address = null;
         ReturnT<String> routeAddressResult = null;
         if (group.getRegistryList()!=null && !group.getRegistryList().isEmpty()) {
@@ -161,6 +165,7 @@ public class XxlJobTrigger {
         // 4、trigger remote executor
         ReturnT<String> triggerResult = null;
         if (address != null) {
+            //发送任务命令到对应执行器
             triggerResult = runExecutor(triggerParam, address);
         } else {
             triggerResult = new ReturnT<String>(ReturnT.FAIL_CODE, null);
@@ -185,6 +190,7 @@ public class XxlJobTrigger {
                 .append((routeAddressResult!=null&&routeAddressResult.getMsg()!=null)?routeAddressResult.getMsg()+"<br><br>":"").append(triggerResult.getMsg()!=null?triggerResult.getMsg():"");
 
         // 6、save log trigger-info
+        // 根据返回的结果更新日志
         jobLog.setExecutorAddress(address);
         jobLog.setExecutorHandler(jobInfo.getExecutorHandler());
         jobLog.setExecutorParam(jobInfo.getExecutorParam());
@@ -207,6 +213,7 @@ public class XxlJobTrigger {
     public static ReturnT<String> runExecutor(TriggerParam triggerParam, String address){
         ReturnT<String> runResult = null;
         try {
+            //返回的是ExecutorBizClient对象，进行远程调用
             ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(address);
             runResult = executorBiz.run(triggerParam);
         } catch (Exception e) {

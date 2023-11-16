@@ -46,12 +46,14 @@ public class ExecutorBizImpl implements ExecutorBiz {
     @Override
     public ReturnT<String> run(TriggerParam triggerParam) {
         // load old：jobHandler + jobThread
+        //根据jobId获取JobThread，JobThread里边维护着triggerQueue，该线程会处理triggerQueue里边的任务
         JobThread jobThread = XxlJobExecutor.loadJobThread(triggerParam.getJobId());
         IJobHandler jobHandler = jobThread!=null?jobThread.getHandler():null;
         String removeOldReason = null;
 
         // valid：jobHandler + jobThread
         GlueTypeEnum glueTypeEnum = GlueTypeEnum.match(triggerParam.getGlueType());
+        //Bean模式
         if (GlueTypeEnum.BEAN == glueTypeEnum) {
 
             // new jobhandler
@@ -121,11 +123,13 @@ public class ExecutorBizImpl implements ExecutorBiz {
         // executor block strategy
         if (jobThread != null) {
             ExecutorBlockStrategyEnum blockStrategy = ExecutorBlockStrategyEnum.match(triggerParam.getExecutorBlockStrategy(), null);
+            //策略：抛弃后来的命令
             if (ExecutorBlockStrategyEnum.DISCARD_LATER == blockStrategy) {
                 // discard when running
                 if (jobThread.isRunningOrHasQueue()) {
                     return new ReturnT<String>(ReturnT.FAIL_CODE, "block strategy effect："+ExecutorBlockStrategyEnum.DISCARD_LATER.getTitle());
                 }
+                //策略：覆盖之前的命令
             } else if (ExecutorBlockStrategyEnum.COVER_EARLY == blockStrategy) {
                 // kill running jobThread
                 if (jobThread.isRunningOrHasQueue()) {
@@ -140,10 +144,12 @@ public class ExecutorBizImpl implements ExecutorBiz {
 
         // replace thread (new or exists invalid)
         if (jobThread == null) {
+            //第一次调该任务，创建一个jobThread对象，并运行该线程
             jobThread = XxlJobExecutor.registJobThread(triggerParam.getJobId(), jobHandler, removeOldReason);
         }
 
         // push data to queue
+        // 将任务triggerParam直接放入到jobThread对象的triggerLogIdSet和triggerQueue【异步执行，由该线程去执行】，直接返回
         ReturnT<String> pushResult = jobThread.pushTriggerQueue(triggerParam);
         return pushResult;
     }

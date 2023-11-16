@@ -71,7 +71,7 @@ public class EmbedServer {
                                             .addLast(new IdleStateHandler(0, 0, 30 * 3, TimeUnit.SECONDS))  // beat 3N, close if idle
                                             .addLast(new HttpServerCodec())
                                             .addLast(new HttpObjectAggregator(5 * 1024 * 1024))  // merge request & reponse to FULL
-                                            .addLast(new EmbedHttpServerHandler(executorBiz, accessToken, bizThreadPool));
+                                            .addLast(new EmbedHttpServerHandler(executorBiz, accessToken, bizThreadPool));      //接收调度中心命令的核心逻辑
                                 }
                             })
                             .childOption(ChannelOption.SO_KEEPALIVE, true);
@@ -155,12 +155,14 @@ public class EmbedServer {
                 @Override
                 public void run() {
                     // do invoke
+                    // 处理来自调度中心的命令
                     Object responseObj = process(httpMethod, uri, requestData, accessTokenReq);
 
                     // to json
                     String responseJson = GsonTool.toJson(responseObj);
 
                     // write response
+                    // 返回执行结果
                     writeResponse(ctx, keepAlive, responseJson);
                 }
             });
@@ -189,6 +191,7 @@ public class EmbedServer {
                         IdleBeatParam idleBeatParam = GsonTool.fromJson(requestData, IdleBeatParam.class);
                         return executorBiz.idleBeat(idleBeatParam);
                     case "/run":
+                        //执行任务的指令
                         TriggerParam triggerParam = GsonTool.fromJson(requestData, TriggerParam.class);
                         return executorBiz.run(triggerParam);
                     case "/kill":

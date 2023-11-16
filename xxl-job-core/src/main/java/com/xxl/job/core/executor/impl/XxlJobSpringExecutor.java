@@ -42,6 +42,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
 
         // super start
         try {
+            //核心- 初始化各种线程、嵌入式的服务器（netty作网络框架，为调度中心提供服务）
             super.start();
         } catch (Exception e) {
             throw new RuntimeException(e);

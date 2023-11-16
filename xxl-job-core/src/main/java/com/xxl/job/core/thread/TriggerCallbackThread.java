@@ -63,6 +63,7 @@ public class TriggerCallbackThread {
                 // normal callback
                 while(!toStop){
                     try {
+                        //监控callBackQueue，异步的执行回调（将任务执行结果发送给调度中心）
                         HandleCallbackParam callback = getInstance().callBackQueue.take();
                         if (callback != null) {
 
@@ -163,6 +164,7 @@ public class TriggerCallbackThread {
     private void doCallback(List<HandleCallbackParam> callbackParamList){
         boolean callbackRet = false;
         // callback, will retry if error
+        // 给所有的调度中心都返回回调信息
         for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
             try {
                 ReturnT<String> callbackResult = adminBiz.callback(callbackParamList);
