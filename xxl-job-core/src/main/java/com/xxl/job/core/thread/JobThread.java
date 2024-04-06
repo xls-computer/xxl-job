@@ -104,6 +104,7 @@ public class JobThread extends Thread{
 		}
 
 		// execute
+		// 线程一直循环，等待triggerQueue有任务的时候就执行
 		while(!toStop){
 			running = false;
 			idleTimes++;
@@ -145,6 +146,7 @@ public class JobThread extends Thread{
 									XxlJobContext.setXxlJobContext(xxlJobContext);
 
 									//执行该任务【反射：调用对应的类的方法】
+									//新建线程来执行任务
 									handler.execute();
 									return true;
 								}
@@ -165,6 +167,7 @@ public class JobThread extends Thread{
 						}
 					} else {
 						// just execute
+						// 当前线程立即执行
 						handler.execute();
 					}
 

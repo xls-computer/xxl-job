@@ -135,6 +135,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
                 if (jobThread.isRunningOrHasQueue()) {
                     removeOldReason = "block strategy effect：" + ExecutorBlockStrategyEnum.COVER_EARLY.getTitle();
 
+                    //不是第一次调用，覆盖之前的
                     jobThread = null;
                 }
             } else {
@@ -145,6 +146,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
         // replace thread (new or exists invalid)
         if (jobThread == null) {
             //第一次调该任务，创建一个jobThread对象，并运行该线程
+            //不是第一次调用，且策略为（覆盖之前的）时，会丢弃之前的
             jobThread = XxlJobExecutor.registJobThread(triggerParam.getJobId(), jobHandler, removeOldReason);
         }
 

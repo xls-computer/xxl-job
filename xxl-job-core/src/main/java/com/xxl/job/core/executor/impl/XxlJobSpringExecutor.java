@@ -28,6 +28,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
 
 
     // start
+    // 当所有单例 bean 都初始化完成以后，会执行
     @Override
     public void afterSingletonsInstantiated() {
 
@@ -35,6 +36,8 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
         /*initJobHandlerRepository(applicationContext);*/
 
         // init JobHandler Repository (for method)
+        // 通过@XxlJob注解扫描本地的JobHandler，放入ConcurrentMap<String, IJobHandler> jobHandlerRepository中
+        // IJobHandler是一个包装了Handler很多信息的类
         initJobHandlerMethodRepository(applicationContext);
 
         // refresh GlueFactory
@@ -42,6 +45,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
 
         // super start
         try {
+            // 执行器端启动
             //核心- 初始化各种线程、嵌入式的服务器（netty作网络框架，为调度中心提供服务）
             super.start();
         } catch (Exception e) {
