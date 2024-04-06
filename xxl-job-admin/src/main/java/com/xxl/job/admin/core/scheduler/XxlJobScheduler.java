@@ -25,22 +25,27 @@ public class XxlJobScheduler  {
         initI18n();
 
         // admin trigger pool start
-        // 启动两个线程池
+        // 启动两个线程池(快慢线程池)，用于执行任务
         JobTriggerPoolHelper.toStart();
 
         // admin registry monitor run
+        // 一个维护执行器实例上下线和心跳【对执行器提供的接口】的线程池，一个维护实例组在线列表的线程
         JobRegistryHelper.getInstance().start();
 
         // admin fail-monitor run
+        // 不断遍历执行失败的任务的线程，如果配置了失败重试，将重新发送执行命令，并更新日志，还要发送告警信息邮件
         JobFailMonitorHelper.getInstance().start();
 
         // admin lose-monitor run ( depend on JobTriggerPoolHelper )
+        // 创建回调线程池，接收执行器执行过后的结果；创建监控线程，将10min前还没有执行完成设置为失败
         JobCompleteHelper.getInstance().start();
 
         // admin log report start
+        // 统计和清理日志线程，统计近3天的报表，每天执行一次将配置的过期的执行日志删除
         JobLogReportHelper.getInstance().start();
 
         // start-schedule  ( depend on JobTriggerPoolHelper )
+        // 【时间管理线程】和发送任务命令线程
         JobScheduleHelper.getInstance().start();
 
         logger.info(">>>>>>>>> init xxl-job admin success.");

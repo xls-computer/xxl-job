@@ -135,6 +135,7 @@ public class JobTriggerPoolHelper {
     }
 
     /**
+     * 调度中心真正的发起执行任务命令
      * @param jobId
      * @param triggerType
      * @param failRetryCount
