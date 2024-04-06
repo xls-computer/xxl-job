@@ -149,6 +149,7 @@ public class JobRegistryHelper {
 
 	// ---------------------- helper ----------------------
 
+	// 执行器实例注册【调度中心的服务的实现】
 	public ReturnT<String> registry(RegistryParam registryParam) {
 
 		// valid
@@ -162,6 +163,7 @@ public class JobRegistryHelper {
 		registryOrRemoveThreadPool.execute(new Runnable() {
 			@Override
 			public void run() {
+				//先尝试更新，如果没有这个实例的话，返回为0，则添加一条记录
 				int ret = XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().registryUpdate(registryParam.getRegistryGroup(), registryParam.getRegistryKey(), registryParam.getRegistryValue(), new Date());
 				if (ret < 1) {
 					XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().registrySave(registryParam.getRegistryGroup(), registryParam.getRegistryKey(), registryParam.getRegistryValue(), new Date());
