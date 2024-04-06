@@ -45,6 +45,7 @@ public class ExecutorRegistryThread {
                         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);
                         for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
                             try {
+                                //线程会不断的注册实例（已经注册的话，就只是更新update时间）
                                 ReturnT<String> registryResult = adminBiz.registry(registryParam);
                                 if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {
                                     registryResult = ReturnT.SUCCESS;
@@ -67,6 +68,7 @@ public class ExecutorRegistryThread {
 
                     try {
                         if (!toStop) {
+                            //30s向调度中心发送一次心跳
                             TimeUnit.SECONDS.sleep(RegistryConfig.BEAT_TIMEOUT);
                         }
                     } catch (InterruptedException e) {
@@ -77,6 +79,7 @@ public class ExecutorRegistryThread {
                 }
 
                 // registry remove
+                // 跳出上边的循环时（即调用toStop()时，才会停止，此时会向调度中心注销）
                 try {
                     RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);
                     for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {

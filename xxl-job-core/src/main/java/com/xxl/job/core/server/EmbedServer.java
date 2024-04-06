@@ -82,7 +82,7 @@ public class EmbedServer {
                     logger.info(">>>>>>>>>>> xxl-job remoting server start success, nettype = {}, port = {}", EmbedServer.class, port);
 
                     // start registry
-                    // 注册执行器实例到调度中心
+                    // 注册执行器实例到调度中心（会一直维持心跳）
                     startRegistry(appname, address);
 
                     // wait util stop
